@@ -38,14 +38,14 @@ class Router
         /**
          * Method bilgisini aramak için uygun hale getirelim
          */
-        $method = explode('|', strtoupper($args[2]));
+        $method = explode('|', strtoupper($args['method']));
 
         /**
          * Sayfa method bilgisi ile bizden istenen method bilgisi eşleşiyorsa devam et
          */
         if (in_array($_SERVER['REQUEST_METHOD'], $method)) {
 
-            $withPattern = self::parse_regex($args[0]);
+            $withPattern = self::parse_regex($args['map']);
 
             /** İstenen pattern bilgisine eş değerse devam et */
             if (preg_match('@^' . $withPattern['url'] . '$@', $_SERVER["REQUEST_URI"], $params)) {
@@ -60,37 +60,34 @@ class Router
                 }
 
                 /** Çalışırılabilir bir method varmı */
-                if (is_callable($args[1])) {
+                if (is_callable($args['action'])) {
 
                     /** Methodu çalıştır */
-                    call_user_func_array($args[1], $params);
+                    call_user_func_array($args['action'], $params);
                     /** */
 
                 } else {
 
                     /** Eğer çalıştırılabilir bir method yoksa Controller var mı ona bakalım */
-                    $controllerEx = explode('@', $args[1]); //folder.controller@
-                    $controllerFolderStr = str_replace('.', '/', $controllerEx[0]);
-                    $controllerName = explode(".", $controllerEx[0]);
-                    $controllerName = end($controllerName);
-                    $dir = $_SERVER["DOCUMENT_ROOT"] . '/controllers/' . $controllerFolderStr . '.php';
+                    $controller = str_replace('.', '/', $args['controller']);
+                    $dir = $_SERVER["DOCUMENT_ROOT"] . '/controllers/' . $controller . '.php';
                     if (file_exists($dir)) {
                         require $dir;
-                        call_user_func_array([new $controllerName, $controllerEx[1]], [$params]);
+                        call_user_func_array([new $controller, $args['action']], [$params]);
                     }
                 }
             }
         }
     }
 
-    public static function get($url, $action)
+    public static function get($map, $controller, $action)
     {
-        self::parse_url([$url, $action, 'GET']);
+        self::parse_url(['map' => $map, 'controller' => $controller, 'action' => $action, 'method' => 'GET']);
     }
 
-    public static function post($url, $action)
+    public static function post($map, $controller, $action)
     {
-        self::parse_url([$url, $action, 'POST']);
+        self::parse_url(['map' => $map, 'controller' => $controller, 'action' => $action, 'method' => 'POST']);
     }
 
 }

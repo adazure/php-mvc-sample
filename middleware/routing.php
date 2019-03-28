@@ -1,8 +1,7 @@
 <?php
 
+Router::get('/test', 'testController', 'action');
 
-Router::get('/test', 'testController@action');
-
-// Router::get('/test', function ($args) {
-//     echo 'Hello World';
-// });
+Router::get('/test2', null, function () {
+    echo 'Hello World';
+});
