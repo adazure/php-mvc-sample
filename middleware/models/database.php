@@ -5,7 +5,7 @@ class Database
 
     public function __construct(){
         try{
-            $this->database = new PDO('mysql:host=91.93.113.229;dbname=admin_junkgrapDB','admin_clico','V6LwmgHtV3');
+            $this->database = new PDO('');
         }
         catch(PDOException $ex){
             echo $ex->getMessage();
