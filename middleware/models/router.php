@@ -43,6 +43,7 @@ class Router
         /**
          * Sayfa method bilgisi ile bizden istenen method bilgisi eşleşiyorsa devam et
          */
+        
         if (in_array($_SERVER['REQUEST_METHOD'], $method)) {
 
             $withPattern = self::parse_regex($args['map']);
