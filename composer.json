@@ -1,0 +1,7 @@
+{
+    "name": "php/mvc",
+    "description": "Php MVC Sample",
+    "require": {
+        "php": "^7.1"
+    }
+}

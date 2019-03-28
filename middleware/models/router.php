@@ -27,12 +27,14 @@ class Router
 
     public static function parse_url($args)
     {
-        /** 
-         * Mevcut görüntülenen controller varsa bu alanı işletmiyoruz 
+        /**
+         * Mevcut görüntülenen controller varsa bu alanı işletmiyoruz
          * */
 
-        if(self::$isActive) return;
-        
+        if (self::$isActive) {
+            return;
+        }
+
         /**
          * Method bilgisini aramak için uygun hale getirelim
          */
@@ -42,7 +44,6 @@ class Router
          * Sayfa method bilgisi ile bizden istenen method bilgisi eşleşiyorsa devam et
          */
         if (in_array($_SERVER['REQUEST_METHOD'], $method)) {
-
 
             $withPattern = self::parse_regex($args[0]);
 
@@ -91,4 +92,5 @@ class Router
     {
         self::parse_url([$url, $action, 'POST']);
     }
+
 }
