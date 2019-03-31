@@ -1,8 +1,15 @@
 <?php
 
-Router::get('/test', 'testController', 'action');
+/**
+ * Routing
+ */
+$router = new Router;
 
-Router::get('/test2', null, function () {
-    echo 'Hello World';
-});
+$router
+    ->get('/', 'testController', 'action')
+    ->run();
 
+/**
+ * Cache Clear
+ */
+unset($router);

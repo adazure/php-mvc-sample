@@ -7,6 +7,6 @@
     <title>Document</title>
 </head>
 <body>
-    Test Page
+    <?=value["title"]?>
 </body>
 </html>
