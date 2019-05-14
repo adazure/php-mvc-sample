@@ -1,8 +1,8 @@
 Options -Indexes
-DirectoryIndex /middleware/models/server.php
+DirectoryIndex /core/default.php
 RewriteEngine On
 #RedirectMatch 500 ^/([a-zA-Z0-9]+\/)+.*(\.php)$
 RewriteBase /
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([0-9a-zA-Z-_/]+)$ /middleware/models/server.php [QSA]
+RewriteRule ^([0-9a-zA-Z-_/]+)$ /core/default.php [QSA]

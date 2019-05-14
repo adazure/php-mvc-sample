@@ -1,0 +1,19 @@
+<?php
+/**
+ * SABİTLER
+ * Site genelinde kullanılacak olan sabit değişkenler burada tutuluyor
+ *
+ */
+
+define("__TOP__", $_SERVER["DOCUMENT_ROOT"] . '/', true);
+define("__LAY__", __TOP__ . 'views/layouts/', true);
+define("__TMP__", __TOP__ . 'views/temp/', true);
+define("__COR__", __TOP__ . 'core/', true);
+define("__REFERER__", isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/');
+define("__CSRGRAP__", Helper::getHeader("HTTP_X_CSR_REQUEST"));
+
+/**
+ * Kullanıcı bilgileri için session kontrolü eklendi.
+ */
+define("get_session_user_key", "session_user_data");
+define("get_session_user", isset($_SESSION[get_session_user_key]));

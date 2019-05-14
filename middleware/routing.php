@@ -1,15 +1,19 @@
 <?php
 
 /**
- * Routing
+ * ROUTING
  */
 $router = new Router;
 
 $router
-    ->get('/', 'testController', 'action')
+    ->get('/', 'homeController', 'action')
+    ->get('/detail/:name/:[\d]+','detailController','action')
     ->run();
 
+
+
 /**
- * Cache Clear
- */
+ * Remove Cache
+ *
+ *  */
 unset($router);

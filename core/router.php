@@ -2,6 +2,7 @@
 
 class Router
 {
+
     /**
      * Şartlara uygun bir rota yönlendirmesi var mı yok mu durumunu tutan değişken
      * URL ile Rota eşleşmesi olduğunda true olacak ve diğer işlemler gerçekleştirilmeyecek
@@ -204,13 +205,13 @@ class Router
                      * Dosya var mı kontrol ediliyor
                      */
                     if (file_exists($dir)) {
-
                         /**
                          * Bulunan dosya çağırılıyor ve oluşturuluyor
                          * İçerisindeki ilgili method çağırılıyor ve parametreler gönderiliyor
                          */
                         require $dir;
                         call_user_func_array([new $controller, $args['action']], $params);
+
 
                     }/** If Exist */
                 }/** Else */
@@ -224,6 +225,7 @@ class Router
          */
         unset($args);
     }
+
 
     /**
      * GET rota oluşturma methodu

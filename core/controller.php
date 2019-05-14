@@ -7,8 +7,8 @@ class Controller
         if (isset($data)) {
             extract($data);
         }
+        require __TOP__ . '/views/' . $viewName . '.php';
 
-        require $_SERVER["DOCUMENT_ROOT"] . '/views/' . $viewName . '.php';
     }
 
 }
