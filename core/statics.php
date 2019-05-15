@@ -16,7 +16,8 @@ class Helper
     {
         $header = getallheaders();
         foreach ($header as $headers => $value) {
-            echo '$headers : '. $value;
+            //echo '$headers : '. $value;
+            if ($value == $name) return true;
         }
 
         return false;

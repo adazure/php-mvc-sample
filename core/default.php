@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . '/helper.php';
+require __DIR__ . '/statics.php';
 require __DIR__ . '/constant.php';
 require __DIR__ . '/session.php';
 require __DIR__ . '/controller.php';

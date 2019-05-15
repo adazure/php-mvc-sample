@@ -1,8 +1,5 @@
 <?php
 
-#/middleware/models/layer.php 
-#define(__CALTURE_NAME__);
-
 const lang = [
     "en" => [
         "title" => "Welcome To Our Website"

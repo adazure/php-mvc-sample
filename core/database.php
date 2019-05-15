@@ -1,10 +1,10 @@
 <?php
 class Database
 {
-    private $ip = '';
-    private $dbname = '';
-    private $dbuser = '';
-    private $dbpass = '';
+    private $ip = '91.93.113.229';
+    private $dbname = 'admin_junkgrapDB';
+    private $dbuser = 'admin_clico';
+    private $dbpass = 'fXnHgNP4d3';
     private $db;
 
     public function __construct()

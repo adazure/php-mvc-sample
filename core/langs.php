@@ -1,6 +1,4 @@
 <?php
-define("__session_name__", "__CALTURE_NAME__");
-define("__CALTURE_NAME__", isset($_SESSION[__session_name__]) ? $_SESSION[__session_name__] : 'en');
 
 /**
  *
