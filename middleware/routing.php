@@ -7,7 +7,7 @@ $router = new Router;
 
 $router
     ->get('/', 'homeController', 'action')
-    ->get('/detail/:name/:[\d]+','detailController','action')
+    //->get('/detail/:name/:[\d]+','detailController','action')
     ->run();
 
 

@@ -26,7 +26,6 @@ class Response
         http_response_code($code);
     }
 
-
     /**
      * 
      * Çağırıldığında bir önceki gelinen sayfaya yönlendirme yapılıyor

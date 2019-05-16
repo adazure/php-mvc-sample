@@ -16,7 +16,7 @@ class Langs
     public static function Get($key)
     {
         if (self::$langData[__CALTURE_NAME__] != null) {
-            if (self::$langData[__CALTURE_NAME__][$key] != null) {
+            if (isset(self::$langData[__CALTURE_NAME__][$key])) {
                 return self::$langData[__CALTURE_NAME__][$key];
             }
         }

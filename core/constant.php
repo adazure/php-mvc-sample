@@ -6,8 +6,9 @@
  */
 
 define("__TOP__", $_SERVER["DOCUMENT_ROOT"] . '/', true);
-define("__LAY__", __TOP__ . 'views/layouts/', true);
-define("__TMP__", __TOP__ . 'views/temp/', true);
+define("__WWW__", __TOP__ . 'views/', true);
+define("__LAY__", __WWW__ . 'layouts/', true);
+define("__TMP__", __WWW__ . 'temp/', true);
 define("__COR__", __TOP__ . 'core/', true);
 define("__MID__", __TOP__ . 'middleware/', true);
 define("__REFERER__", isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/');

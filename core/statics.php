@@ -28,14 +28,21 @@ class Helper
         return preg_match($format, $data);
     }
 
+    /**
+     * Kullanıcıya ait gelen JSON data verisini session üzerinde tutan method.
+     */
     public static function setUser($data)
     {
         $_SESSION[get_session_user_key] = json_encode($data);
     }
 
+    /**
+     * Session üzerinde kullanıcıya ait oturum bilgilerini verir
+     */
     public static function getUser()
     {
         /** return JSON */
+        if(!isset($_SESSION[get_session_user_key])) return false;
         return json_decode($_SESSION[get_session_user_key], true);
     }
 
