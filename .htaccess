@@ -1,8 +1,19 @@
+
+<Files ~ “^\.ht”>
+Order allow,deny
+Deny from all
+Satisfy All
+</Files>
+
+
+#AddType application/x-httpd-php .grp.php
 Options -Indexes
-DirectoryIndex /core/default.php
+DirectoryIndex ./server.php
 RewriteEngine On
-#RedirectMatch 500 ^/([a-zA-Z0-9]+\/)+.*(\.php)$
-RewriteBase /
+RedirectMatch 404 ^/([a-zA-Z0-9]+\/)+.*(\.php)$
+RedirectMatch 404 ^/(core|controllers|langs|middleware|views|cache)\/.*$
+RewriteBase /public/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([0-9a-zA-Z-_/]+)$ /core/default.php [QSA]
+RewriteRule /(.*\.(gif|png|jpg))$ /public/images/$1
+RewriteRule ^([0-9a-zA-Z-_/]+)$ ./server.php [QSA]

@@ -23,6 +23,14 @@ class Langs
 
         return "";
     }
+
+    public static function GetLang()
+    {
+        if (isset(self::$langData[__CALTURE_NAME__])) {
+            return self::$langData[__CALTURE_NAME__];
+        }
+        return [];
+    }
 }
 
 Helper::requireFiles(__TOP__ . 'langs/');

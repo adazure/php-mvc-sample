@@ -23,10 +23,26 @@ class Helper
         return false;
     }
 
+    
+    public static function getData($data, $route)
+    {
+        if (isset($data)) {
+            foreach ($route as $value) {
+                if (isset($data[$value])) {
+                    $data = $data[$value];
+                }else{
+                    $data = false;
+                }
+            }
+        }
+        return $data;
+    }
+
     public static function pregFormat($format, $data)
     {
         return preg_match($format, $data);
     }
+
 
     /**
      * Kullanıcıya ait gelen JSON data verisini session üzerinde tutan method.

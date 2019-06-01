@@ -1,15 +1,15 @@
 <?php
 
-include __DIR__ . '/parser.php';
+include __DIR__ . '/renderer.php';
 include __DIR__ . '/error.php';
 
-class Controller extends Parser
+class Controller extends Renderer
 {
 
     protected function view(...$args)
     {
         $count = count($args);
-        $viewName = debug_backtrace()[1]['function'];;
+        $viewName = debug_backtrace()[1]['function'];
         $data = null;
         $options = null;
 
@@ -38,17 +38,17 @@ class Controller extends Parser
             $viewName = $args[0];
         }
 
-        if (!file_exists(__WWW__ . $viewName . '.php')) {
+        if (!file_exists(__WWW__ . $viewName . __fileext__)) {
             Error::view404();
         }
 
-        if (isset($data)) {
-            extract($data);
-        }
+        // if (isset($data)) {
+        //     extract($data);
+        // }
 
         unset($count);
 
-        $this->viewRender($viewName, $data, $options);
+        $this->init($viewName, $data, $options);
     }
 
 }

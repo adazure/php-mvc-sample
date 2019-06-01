@@ -7,8 +7,10 @@
     <title>MASTER PAGE</title>
 </head>
 <body>
+        <?php
+            $message = "Hello";
+        ?>
 
-    {body content}
-
+        {print $message}
 </body>
 </html>
