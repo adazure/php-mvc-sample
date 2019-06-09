@@ -5,22 +5,31 @@ class Renderer
 
     private $VALUES = [];
     private $DATA = [];
-    private $OPTIONS = ['cache' => 0];
+    private $OPTIONS = ['cache' => 0, 'cache_prefix' => '', 'cache_vars' => false];
     private $VIEW = "";
     private $TIME_EXPIRED = 0;
     private $CACHE_FILE = null;
     private $VIEW_URL = null;
     private $INCLUDES = [];
+    private $HEADER = null;
+    public $ISROOT = [] || false;
     private $REGEX = [
-        'layout' => '/<g-layout\sname=\"(.*)\"\s*\/>/',
-        'include' => '/<g-include\sname=\"(.*)\"\s*\/>/',
-        'Queries' => '/(data|session|request)[\.?\w+]+\w+/',
+        'layout' => '/<g-layout\sname\s*=\s*\"(.*?)\"\s*\/>/',
+        'include' => '/<g-include\s*name\s*=\s*\"(.*?)\"\s*\/>/',
+        'Queries' => '/(data|request|session|lang)([\.\w]+)/', // data.user.name vs session.user.id vs
         'Body' => '/<g-body\s*\/>/',
-        'If' => '/<g-if\scondition=\"(.*)\"\s*>/',
-        'ElseIf' => '/<g-elseif\scondition=\"(.*)\"\s*\/>/',
+        'If' => '/<g-if\s*condition\s*=\s*\"(.*?)\"\s*>/',
+        'For' => '/<g-for\s*condition\s*=\s*\"(.*?)\"\s*>/',
+        'Foreach' => '/<g-foreach\s*condition\s*=\s*\"(.*?)\"\s*>/',
+        'ElseIf' => '/<g-elseif\s*condition\s*=\s*\"(.*?)\"\s*\/>/',
         'Else' => '<g-else>',
         'EndIf' => '</g-if>',
-        'KeyValue' => '/{(\w+)\s(.*)}/',
+        'EndFor' => '</g-for>',
+        'EndForeach' => '</g-foreach>',
+        //'CommentJS' => '/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/',
+        'CommentHTML' => '/(?:\<!--(?:.*?\r?\n?)*--\>)/',
+        'Header' => '/(?:\<g-header\>((?:.*?\r?\n?)*)<\/g-header\>)/',
+        'KeyValue' => '/{(\w+){1}\s+(.*?)}/', // print(0) data.user.name(1)
 
     ];
 
@@ -45,7 +54,7 @@ class Renderer
         $this->VIEW = $viewname;
 
         /** Gelen ekstra alanları bizim ilgili değişkenimizdeki alanları bulunduranları alalım */
-        if (count($options) > 0) {
+        if (isset($options) && count($options) > 0) {
             foreach ($options as $key => $value) {
                 if (isset($this->OPTIONS[$key])) {
                     $this->OPTIONS[$key] = $options[$key];
@@ -53,8 +62,20 @@ class Renderer
             }
         }
 
+        /** Cachelemeye querystring değerleri dahil edilsin mi sorgulanıyor */
+        $querystr = "";
+        if ($this->OPTIONS['cache_vars']) {
+            $uri = $_SERVER["REQUEST_URI"];
+            $pos = strpos($uri, '?');
+            if ($pos) {
+                $querystr = substr($uri, $pos + 1, strlen($uri));
+                $querystr = preg_replace(array('[\W+]'), array('_'), $querystr);
+            }
+            unset($uri, $pos);
+        }
+
         /** İşlem sonrası ilgili render verilerinin, içerisine yükleneceği cache dosyasının yolu */
-        $this->CACHE_FILE = __TOP__ . 'cache/views.' . str_replace('/', '.', $viewname) . '.cache';
+        $this->CACHE_FILE = __TOP__ . 'cache/views.' . str_replace('/', '.', $viewname) . $this->OPTIONS['cache_prefix'] . $querystr . '.php';
 
         /** Cache durumu ilgili view için aktif ise süresini kontrol eder. */
         $this->TIME_EXPIRED = file_exists($this->CACHE_FILE) ? time() - filemtime($this->CACHE_FILE) > $this->OPTIONS['cache'] * 60 : true;
@@ -67,13 +88,14 @@ class Renderer
 
             /** View dosyası var mı kontrol et */
             if (file_exists($this->VIEW_URL)) {
-
                 /** İlgili view dosyasının içeriğini çözümleyelim */
                 $render_view = $this->render($this->VIEW_URL);
 
+                $render_view = $this->renderHeader($render_view);
+
                 /** Dosyayı kaydedelim */
                 file_put_contents($this->CACHE_FILE, $render_view);
-
+                
                 unset($cont, $render_view);
             }
 
@@ -90,7 +112,9 @@ class Renderer
             $this->VIEW,
             $this->TIME_EXPIRED,
             $this->CACHE_FILE,
-            $this->VIEW_URL
+            $this->VIEW_URL,
+            $this->HEADER,
+            $querystr
         );
     }
 
@@ -112,8 +136,20 @@ class Renderer
         /** Dosya içeriğini if else süzgecinden geçir. Böylece kontrol sırasında yüklenmesi istenmeyen içerikler yüklenmeyecek ve sorgudan çıkartılacaklar */
         $file_content = $this->ob_ifElse($file_content);
 
+        /** Yorum satırlarını kaldır */
+        $file_content = $this->removeComments($file_content);
+
+        /** Varsa header bilgileri */
+        $file_content = $this->setHeaderContent($file_content);
+
         /** İçeriğe son halini verelim. İçerisindeki tüm {key value} alanlarını değiştirelim */
         $file_content = $this->ob_lastContents($file_content);
+
+        /** Varsa döngüleri oluştur */
+        $file_content = $this->ob_for($file_content);
+
+        /** Varsa döngüleri oluştur */
+        $file_content = $this->ob_foreach($file_content);
 
         /** Oluşturulmuş dosya içeriğini çalıştır ve geri döndür */
         $file_content = $this->ob_burn($file_content);
@@ -137,7 +173,7 @@ class Renderer
         if (preg_match($this->REGEX['layout'], $viewContent, $result)) {
 
             /** Bulunan değerler dosya yolu olarak sırasıyla oluşturuluyor */
-            $layout_file = __LAY__ . '/' . str_replace('.', '/', $result[1]) . __fileext__;
+            $layout_file = __LAY__ . str_replace('.', '/', $result[1]) . __fileext__;
 
             /** Layout Dosyanın varlığı kontrol ediliyor. */
             if (file_exists($layout_file)) {
@@ -145,8 +181,14 @@ class Renderer
                 /** Layout dosya içeriği */
                 $layout_content = file_get_contents($layout_file);
 
+                /** Yorum satırlarını kaldır */
+                $layout_content = $this->removeComments($layout_content);
+
                 /** Layout dosyası If Else süzgecinden geçiriliyor */
                 $layout_content = $this->ob_ifElse($layout_content);
+
+                /** İçeriğe son halini verelim. İçerisindeki tüm {key value} alanlarını değiştirelim */
+                $layout_content = $this->ob_lastContents($layout_content);
 
                 /** Layout içeriği yakılıyor ve sonucu alınıyor */
                 $layout_content = $this->ob_burn($layout_content);
@@ -170,6 +212,51 @@ class Renderer
         return $viewContent;
     }
 
+    private function removeComments($content)
+    {
+        if (preg_match_all($this->REGEX['CommentHTML'], $content, $matches)) {
+            $list = $matches[0];
+            foreach ($list as $key => $value) {
+                $content = str_replace($value, '', $content);
+            }
+            unset($list);
+        }
+        return $content;
+    }
+
+    private function renderHeader($content)
+    {
+
+        /** Önce sayfadaki değiştirilecek alanı (layout dosyasındakini) bul */
+        if (preg_match('/(?:\@header\(\){((?:.*?\r?\n?)*)})/', $content, $matches)) {
+            /** Değiştirilecek son header bilgisi varsa, layouttaki header alanıyla değiştir */
+            if ($this->HEADER != null) {
+                $content = str_replace($matches[0], $this->HEADER, $content);
+            } else {
+                /** Header alanında belirlenenleri bırak */
+                $content = str_replace($matches[0], $matches[1], $content);
+            }
+        }
+        return $content;
+    }
+
+    private function setHeaderContent($content)
+    {
+
+        if (preg_match_all($this->REGEX['Header'], $content, $matches)) {
+            $full = $matches[0];
+            $values = $matches[1];
+            foreach ($full as $key => $value) {
+                $this->HEADER = $values[$key];
+            }
+            $content = str_replace($full[$key], '', $content);
+
+            unset($full, $values);
+        }
+
+        return $content;
+    }
+
     /**
      *
      * BURN YAKICI METHOD
@@ -183,6 +270,7 @@ class Renderer
         ob_start();
         eval('?>' . $content);
         return ob_get_clean();
+
     }
 
     /**
@@ -215,7 +303,7 @@ class Renderer
 
                 /** Gelen view dosyalarının yollarını oluşturalım */
                 $file = __TOP__ . str_replace('.', '/', $val) . __fileext__;
-
+                $fcontent = "<!--not included file -->";
                 /** View dosyası var mı kontrol et */
                 if (file_exists($file)) {
 
@@ -225,9 +313,9 @@ class Renderer
                      */
                     $fcontent = $this->render($file);
 
-                    /** Son olarak da full değerdeki tanımı <g-include ..> kısmını içerikle değiştir. */
-                    $content = str_replace($full[$i], $fcontent, $content);
                 }
+                /** Son olarak da full değerdeki tanımı <g-include ..> kısmını içerikle değiştir. */
+                $content = str_replace($full[$i], $fcontent, $content);
 
             }
 
@@ -255,8 +343,10 @@ class Renderer
      *  İçerik içerisinde varsa data, session vs gibi özel tanımlı içerikleri bulup değiştir
      *  Böylece if sorgularında doğru bir şekilde işlem yapılabilir
      */
+
     private function parse_condition($condition)
     {
+
         /** Sorgu değerlerini bulur */
         if (preg_match_all($this->REGEX['Queries'], $condition, $result)) {
 
@@ -266,7 +356,6 @@ class Renderer
              * request.query
              */
             $full = $result[0];
-
             /** Tanımların sadece noktaya kadar olan ilk değerini verir
              * data
              * session
@@ -306,6 +395,7 @@ class Renderer
 
                 $action = array($this, '__' . $names[$key]);
 
+                $r = "";
                 /** Çalıştırılabilir olup olmadığını kontrol et */
                 if (is_callable($action)) {
 
@@ -315,16 +405,52 @@ class Renderer
                      */
                     $r = call_user_func($action, $list);
 
-                    /** Tam tanım verisini methoddan dönen veri ile değiştir. */
-                    $condition = str_replace($value, $r === true ? 1 : 0, $condition);
                 }
 
+                if (is_string($r)) {
+                    $r = is_string($r) ? "'" . $r . "'" : $r;
+                } else if (is_array($r)) {
+                    $r = '((array)json_decode(\'' . json_encode($r) . '\'))';
+                }
+
+                $condition = str_replace($value, $r, $condition);
             }
 
             unset($names, $full, $inputs, $action, $r);
         }
 
         return $condition;
+    }
+
+    private function matches($name, $pattern, $content)
+    {
+        /**
+         * İçerikte ilgili tanımları arayalım
+         */
+
+        if (preg_match_all($pattern, $content, $result)) {
+
+            /** Bulunan regex kümesinin tam hallerinin listesi <g-if condition="....."> */
+            $full = $result[0];
+
+            /** Bulunan regex kümesinin paranter condition alanındaki verilerin listesi */
+            $values = $result[1];
+
+            /** Bulunan listeyi sırasıyla işlemden geçir */
+            foreach ($values as $i => $val) {
+
+                /** Yardımcı methoddan ilgiyi veriyi düzenlemesini istiyoruz */
+                $condition = $this->parse_condition($val);
+
+                /** Bulduğun tanımları düzenlenmiş içerikle değiştir */
+                $content = str_replace($full[$i], '<?php ' . $name . '(' . $condition . '): ?>', $content);
+
+            }
+
+            unset($condition, $full, $values);
+        }
+
+        return $content;
     }
 
     /**
@@ -339,57 +465,42 @@ class Renderer
     {
 
         /**
-         * Match yardımcı method ile ilgili içerikte ıf/if else tanımlarını arayacağız
-         * Parametre olarak name = yerine konularak metin
-         * Parametre olarak pattern = aranacak tanım
-         */
-        $match = function ($name, $pattern, $content) {
-
-            /**
-             * İçerikte ilgili tanımları arayalım
-             */
-            if (preg_match_all($pattern, $content, $result)) {
-
-                /** Bulunan regex kümesinin tam hallerinin listesi <g-if condition="....."> */
-                $full = $result[0];
-
-                /** Bulunan regex kümesinin paranter condition alanındaki verilerin listesi */
-                $values = $result[1];
-                /** Bulunan listeyi sırasıyla işlemden geçir */
-                foreach ($values as $i => $val) {
-
-                    /** Yardımcı methoddan ilgiyi veriyi düzenlemesini istiyoruz */
-                    $condition = $this->parse_condition($val);
-
-                    /** Bulduğun tanımları düzenlenmiş içerikle değiştir */
-                    $content = str_replace($full[$i], '<?php ' . $name . ' (' . $condition . '){?>', $content);
-
-                }
-
-                unset($condition, $full, $values);
-            }
-
-            return $content;
-        };
-
-        /**
          * Gelen içerikte If değerlerini arıyoruz ve değiştirilmesi iştenen verileri giriyoruz
          * Match yardımcı methodumuza ilk olarak, bulunan if tanımının yerine geçecek olan değeri veriyoruz "If"
          * Daha sonra bulmasını istediğimiz if/else tanımı
          */
 
         /** İf İçin */
-        $content = $match('if', $this->REGEX['If'], $content);
+        $content = $this->matches('if', $this->REGEX['If'], $content);
 
         /** if else için */
-        $content = $match('}else if', $this->REGEX['ElseIf'], $content);
+        $content = $this->matches('elseif', $this->REGEX['ElseIf'], $content);
 
         /** Son olarak else ve end if için tanımları değiştiriyoruz */
-        $content = str_replace(array($this->REGEX['Else'], $this->REGEX['EndIf']), array('<?php }else{?>', '<?php }?>'), $content);
+        $content = str_replace(array($this->REGEX['Else'], $this->REGEX['EndIf']), array('<?php else: ?>', '<?php endif; ?>'), $content);
 
         return $content;
     }
 
+    private function ob_for($content)
+    {
+
+        $content = $this->matches('for', $this->REGEX['For'], $content);
+
+        $content = str_replace($this->REGEX['EndFor'], '<?php endfor; ?>', $content);
+
+        return $content;
+    }
+
+    private function ob_foreach($content)
+    {
+
+        $content = $this->matches('foreach', $this->REGEX['Foreach'], $content);
+
+        $content = str_replace($this->REGEX['EndForeach'], '<?php endforeach;?>', $content);
+
+        return $content;
+    }
     /**
      *
      * Tamamen oluşturulmuş içerik içerisinde son işlemleri yaptırır.
@@ -450,15 +561,12 @@ class Renderer
     private function op_print($value)
     {
         $nvalue = "<?=''?>";
-        //((data|session|request)(\.\w+)+)   => matches[4 params] [1] => full :::: data.full.name
-
         /** Eğer liste boş işe boş gönder */
         if (empty($value)) {
-            return $nvalue;
+            return "";
         }
 
         /** Gelen value değeri içinde Queriesler var mı kontrol et */
-
         $nvalue = $this->parse_condition($value);
 
         return "<?=" . $nvalue . "?>";

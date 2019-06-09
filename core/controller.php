@@ -1,54 +1,27 @@
 <?php
 
-include __DIR__ . '/renderer.php';
-include __DIR__ . '/error.php';
+require_once __DIR__ . '/renderer.php';
+require_once __DIR__ . '/error.php';
 
 class Controller extends Renderer
 {
 
     protected function view(...$args)
-    {
-        $count = count($args);
-        $viewName = debug_backtrace()[1]['function'];
-        $data = null;
-        $options = null;
+    { 
+        try {
+            $count = count($args);
+            $viewName = debug_backtrace()[1]['function'];
+            $data = $count > 1 ? (empty($args[1]) ? [] : $args[1]) : [];
+            $options = $count > 2 ? (empty($args[2]) ? [] : $args[2]) : [];
+            $viewName = strtolower(empty($args[0]) ? $viewName : $args[0]);
 
-        /** View, Data, Options */
-        if ($count == 3 and is_string($args[0]) and is_array($args[1]) and is_array($args[2])) {
-            $viewName = $args[0];
-            $data = $args[1];
-            $options = $args[2];
-        }
-        /** View, Data */
-        else if ($count == 2 and is_string($args[0]) and is_array($args[1])) {
-            $viewName = $args[0];
-            $data = $args[1];
-        }
-        /** Data, Options */
-        else if ($count == 2 and is_array($args[0]) and is_array($args[1])) {
-            $data = args[0];
-            $options = args[1];
-        }
-        /** Data*/
-        else if ($count == 1 and is_array($args[0])) {
-            $data = $args[0];
-        }
-        /** View*/
-        else if ($count == 1 and is_string($args[0])) {
-            $viewName = $args[0];
-        }
+            if (!file_exists(__WWW__ . $viewName . __fileext__)) {
+                Error::view404();
+            }
+            $this->init($viewName, $data, $options);
 
-        if (!file_exists(__WWW__ . $viewName . __fileext__)) {
+        } catch (Exception $th) {
             Error::view404();
         }
-
-        // if (isset($data)) {
-        //     extract($data);
-        // }
-
-        unset($count);
-
-        $this->init($viewName, $data, $options);
     }
-
 }

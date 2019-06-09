@@ -1,3 +1,3 @@
-<g-layout name="master"/>
+<g-layout name="master" />
 
-<h1>Hello Page</h1>
+<h1>Welcome {print data.name}</h1>

@@ -12,29 +12,48 @@ class Helper
 
     }
 
+    private static function getallheaders2()
+    {
+        $headers = [];
+      
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            }
+        }
+        return $headers;
+    }
+
     public static function getHeader($name)
     {
-        $header = getallheaders();
-        foreach ($header as $headers => $value) {
-            //echo '$headers : '. $value;
-            if ($value == $name) return true;
+        try {
+            $header = Helper::getallheaders2();
+            foreach ($header as $headers => $value) {
+                if ($headers == $name) {
+                    return true;
+                }
+
+            }
+            
+        } catch (Exception $th) {
+
         }
 
         return false;
     }
 
-    
     public static function getData($data, $route)
     {
         if (isset($data)) {
             foreach ($route as $value) {
                 if (isset($data[$value])) {
                     $data = $data[$value];
-                }else{
-                    $data = false;
+                } else {
+                    $data = "";
                 }
             }
         }
+
         return $data;
     }
 
@@ -42,7 +61,6 @@ class Helper
     {
         return preg_match($format, $data);
     }
-
 
     /**
      * Kullanıcıya ait gelen JSON data verisini session üzerinde tutan method.
@@ -58,7 +76,10 @@ class Helper
     public static function getUser()
     {
         /** return JSON */
-        if(!isset($_SESSION[get_session_user_key])) return false;
+        if (!isset($_SESSION[get_session_user_key])) {
+            return false;
+        }
+
         return json_decode($_SESSION[get_session_user_key], true);
     }
 

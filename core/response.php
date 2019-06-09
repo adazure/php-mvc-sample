@@ -23,7 +23,8 @@ class Response
      */
     public static function error($code)
     {
-        http_response_code($code);
+        header('Error:Page', true, $code);
+        exit();
     }
 
     /**

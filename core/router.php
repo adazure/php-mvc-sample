@@ -25,9 +25,10 @@ class Router
          * İşlemler sırasında kullanılacak değerleri big alanda topluyoruz
          */
         $cache = [
-            'pattern' => $map,
+            'pattern' => str_replace('/', '\/', $map),
             'stringMatch' => '[a-zA-Z0-9_-]+',
-            'anyMatch' => '@\:[\[\]\(\)\w+0-9\\\,\{\}_-]+@',
+            //'anyMatch' => '@\:[\[\]\(\)\w+0-9\\\,\{\}_-]+@',
+            'other' => '@{[a-z]+?}|{.*?}@',
         ];
 
         /**
@@ -52,22 +53,24 @@ class Router
          * /:param1
          * /:param2
          */
-        if (preg_match_all($cache['anyMatch'], $map, $args)) {
+
+        if (preg_match_all($cache['other'], $map, $args)) {
 
             /**
              * Bulunan tüm /:[], /:name gibi değerler işleme alınıyor
              */
+
             foreach ($args[0] as $key => $value) {
+
                 /**
                  * /: ifadesindeki ":" işareti kaldırılıyor
                  */
-                $value = substr($value, 1);
+                $value = str_replace(array('{', '}'), array('', ''), $value);
 
                 /**
                  * Öncelikle gelen value değeri /:name şeklinde bir değer mi buna bakılıyor
                  * Eğer değer eşleşiyorsa dönüş olarak cache['stringMatch'] regex değeri gönderiliyor, değilse gelen değer döndürülüyor
                  */
-
                 $val = preg_match('/^' . $cache['stringMatch'] . '$/', $value) ? $cache['stringMatch'] : $value;
 
                 /**
@@ -84,7 +87,12 @@ class Router
          * Çağırılan url bilgisi içerisinde, tamamlamış olduğumuz map rotasını sorguluyoruz
          * Eğer uygun olan rota bulunursa işleme alıyoruz
          */
-        if (preg_match_all('@^' . $cache['pattern'] . '$@', $_SERVER["REQUEST_URI"], $params)) {
+        $URI = $_SERVER["REQUEST_URI"];
+        $POS = strpos($URI, '?');
+        $URI = substr($URI, 0, !empty($POS) ? $POS : strlen($URI));
+
+        if (preg_match_all('@^' . $cache['pattern'] . '$@', $URI, $params)) {
+         
             /**
              * Listedeki ilk değeri siliyoruz
              */
@@ -96,6 +104,7 @@ class Router
             foreach ($params as $key => $value) {
                 $parameters[$key] = $value[0];
             }
+
 
             /**
              * Eşleşen bir rota olduğuna dair değişkenimizin durumunu true olarak çeviriyoruz
@@ -212,7 +221,6 @@ class Router
                         require $dir;
                         call_user_func_array([new $controller, $args['action']], $params);
 
-
                     }/** If Exist */
                 }/** Else */
 
@@ -225,7 +233,6 @@ class Router
          */
         unset($args);
     }
-
 
     /**
      * GET rota oluşturma methodu

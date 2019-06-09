@@ -5,12 +5,13 @@
  */
 $router = new Router;
 
+/**
+ * get('[URL-MAP]','[CONTROLLER]','[ACTION]')
+ */
 $router
-    ->get('/', 'homeController', 'action')
-    //->get('/detail/:name/:[\d]+','detailController','action')
+
+    ->get('/', 'home', 'action')
     ->run();
-
-
 
 /**
  * Remove Cache

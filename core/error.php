@@ -1,6 +1,6 @@
 <?php
 
-class Error
+class CustomError
 {
     public static function view404()
     {
