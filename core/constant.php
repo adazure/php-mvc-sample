@@ -13,7 +13,7 @@ define("__TMP__", __WWW__ . 'temp/', true);
 define("__COR__", __TOP__ . 'core/', true);
 define("__MID__", __TOP__ . 'middleware/', true);
 define("__REFERER__", isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/');
-define("__ISHEADER__", Helper::getHeader("Content-Grapbox"));
+define("__ISHEADER__", Helper::getHeader("CXRS_CROSS"));
 define("__ISROOT__", __REFERER__ != '/' ? parse_url(__REFERER__, PHP_URL_HOST) == $_SERVER['HTTP_HOST'] : false);
 
 /**
